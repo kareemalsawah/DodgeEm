@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dodge 'em</title>
+</head>
+<body>
+<canvas id="canvas" width = "1300" height="600"></canvas>
+<h1 id="score" style="display:none;">Score : 0</h1>
+<audio id="shotgun1" style="visibility:hidden;" src="shotgun.mp3" controls></audio>
+
+<!--Images-->
+<img id="walk1Green" src="sprites/toUse/GreenAlien/alienGreen_walk1.png" style="display:none;"></img>
+<img id="walk2Green" src="sprites/toUse/GreenAlien/alienGreen_walk2.png" style="display:none;"></img>
+<img id="idleGreen1" src="sprites/toUse/GreenAlien/alienGreen_stand.png" style="display:none;"></img>
+<img id="jumpGreen1" src="sprites/toUse/GreenAlien/alienGreen_jump.png" style="display:none;"></img>
+<img id="duckGreen" src="sprites/toUse/GreenAlien/alienGreen_duck.png" style="display:none;"></img>
+
+<img id="walk1GreenFlipped" src="sprites/toUse/GreenAlien/alienGreen_walk1Flipped.png" style="display:none;"></img>
+<img id="walk2GreenFlipped" src="sprites/toUse/GreenAlien/alienGreen_walk2Flipped.png" style="display:none;"></img>
+<img id="idleGreen1Flipped" src="sprites/toUse/GreenAlien/alienGreen_standFlipped.png" style="display:none;"></img>
+<img id="jumpGreen1Flipped" src="sprites/toUse/GreenAlien/alienGreen_jumpFlipped.png" style="display:none;"></img>
+<img id="duckGreenFlipped" src="sprites/toUse/GreenAlien/alienGreen_duckFlipped.png" style="display:none;"></img>
+
+
+<img id="shieldBronze" src="sprites/toUse/shots/shieldBronze.png" style="display:none;"></img>
+<img id="heart" src="sprites/toUse/shots/hud_heartFull.png" style="display:none;"></img>
+<img id="background1" src="sprites/toUse/background2.png" style="display:none;"></img>
+</body>
+<img id="foreground1" src="sprites/toUse/foreground1.png" style="display:none;"></img>
+<img id="canon1" src="sprites/toUse/laserDown.png" style="display:none;"></img>
+<img id="canon2" src="sprites/toUse/laserDownShoot.png" style="display:none;"></img>
+<img id="metalSupport" src="sprites/toUse/metalSupport.png" style="display:none;"></img>
+<img id="laserHit" src="sprites/toUse/shots/laserRedBurst.png" style="display:none;"></img>
+<img id="emptyHearts" src="sprites/toUse/Hearts Empty.png" style="display:none;"></img>
+<img id="fullHearts" src="sprites/toUse/shots/fullHearts300.png" style="display:none;"></img>
+<img id="goldCoin" src="sprites/toUse/shots/coinGold.png" style="display:none;"></img>
+<img id="silverCoin" src="sprites/toUse/shots/coinSilver.png" style="display:none;"></img>
+<img id="emerald" src="sprites/toUse/shots/gemGreen.png" style="display:none;"></img>
+<img id="freeze" src="sprites/toUse/Freeze1.png" style="display:none;"></img>
+
+</body>
+<script src="BasicJs.js"></script>
+<script src="GlobalVars.js"></script>
+<script src="gameloop.js"></script>
+<script src="Squares.js"></script>
+<script src="spawns.js"></script>
+<script src="spriteDeclarations.js"></script>
+<script>
+var shotgun1 = document.getElementById("shotgun1");
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var width_C = 1300;
+var height_C = 600;
+var tickTime = 50;
+
+//declare parts of sprites
+
+
+startGame();
+function startGame(){
+	fillBackground();
+	character = new Character(100,height_C-50,100,100,100,"red");
+	updateCharacterSpriteClock();
+	spawnShot();
+	spawnHealth();
+	spawnSlowers();
+	spawnBlinders();
+	spawnInvis();
+	spawnGoldCoin();
+	spawnSilverCoin();
+	spawnEmerald();
+	gameLoop();
+}
+
+function updateCharacterSpriteClock(){
+	character.walkIndex++;
+	if(character.walkIndex==2){
+		character.walkIndex = 0;
+	}
+	setTimeout(updateCharacterSpriteClock,tickTime*2);
+}
+
+function Character(x,y,health,ammo,power,color){
+	this.x = x;
+	this.y = y;
+	this.health = health;
+	this.ammo = ammo;
+	this.power = power;
+	this.jumping = false;
+	this.vertSpeed = 0;
+	this.color = color;
+	this.walkIndex = 0;
+	this.right = false;
+	this.left = false;
+	this.lastRight = true;
+	this.safe = false;
+
+	this.draw = function(){
+		if(gravity>10){
+			if(this.lastRight){
+				ctx.drawImage(duckGreen,this.x,this.y-20,50,70);
+			}else{
+				ctx.drawImage(duckGreenFlipped,this.x,this.y-20,50,70);
+			}
+		}else{
+		if(this.jumping){
+			if(this.lastRight){
+				ctx.drawImage(jumpGreen,this.x,this.y-20,50,70);
+			}else{
+				ctx.drawImage(jumpGreenFlipped,this.x,this.y-20,50,70);
+			}
+		}else if(this.right){
+			//ctx.beginPath();
+			ctx.drawImage(walk[this.walkIndex],this.x,this.y-20,50,70);
+		}else if(this.left){
+			ctx.drawImage(walkFlipped[this.walkIndex],this.x,this.y-20,50,70);
+		}else{
+			if(this.lastRight){
+				ctx.drawImage(idleGreen,this.x,this.y-20,50,70);
+			}else{
+				ctx.drawImage(idleGreenFlipped,this.x,this.y-20,50,70);
+			}
+
+		}
+	}
+
+
+		//sheilds
+		if(!canBeHit){
+			if(this.lastRight){
+				ctx.drawImage(shieldBronze,this.x+20,this.y,60,60);
+			}else{
+				ctx.drawImage(shieldBronze,this.x-30,this.y,60,60);
+			}
+		}
+		
+	}
+
+	this.jump = function(){
+		if(!this.jumping){
+			this.jumping = true;
+			vertSpeed = jumpPower;
+		}
+	}
+
+	this.updatePosition = function(){
+		if(this.jumping){
+			this.y -= vertSpeed;
+			vertSpeed -= gravity/2;
+			if(this.y >= height_C-50){
+				this.jumping = false;
+				this.y = height_C-50;
+				gravity = 9.81;
+				vertSpeed = 0;
+			}
+		}else{
+			if(gravity>10&&this.y >= height_C-50){
+				this.jumping = false;
+				this.y = height_C-50;
+				gravity = 9.81;
+				vertSpeed = 0;
+			}
+		}
+	}
+}
+
+document.onkeydown = function userInput(){
+	switch(event.keyCode){
+		case 39:
+		leftPressed = true;
+		character.right = true;
+		character.lastRight = true;
+		break;
+		case 38:
+		character.jump();
+		break;
+		case 37:
+		rightPressed = true;
+		character.left = true;
+		character.lastRight = false;
+		break;
+		case 40:
+		gravity *= 10;
+		break;
+	}
+}
+
+document.onkeyup = function userInput(){
+	switch(event.keyCode){
+		case 39:
+		leftPressed = false;	
+		character.right = false;
+		break;
+		case 37:
+		rightPressed = false;
+		character.left = false;
+		break;
+	}
+}
+</script>
+<style>
+</style>
+</html>

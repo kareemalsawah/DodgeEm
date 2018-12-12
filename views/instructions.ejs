@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Main Menu</title>
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" />
+</head>
+<body>
+<h1>Instructions:</h1>
+<div class="container">
+<div class="obj">
+<img src="sprites/toUse/shots/laserRedBurst.png" width="60" height="60"></img>
+<h3>Try to escape these laser shots. They can kill you.</h3><br>
+</div>
+<div class="obj">
+<img src="sprites/toUse/Freeze1.png" style="margin-left:-10px;" width="80" height="80"></img>
+<h3 style="margin-left:-10px;">These can slow you down. If you get hit by 2 in a row, you will freeze.</h3><br>
+</div>
+<div class="obj">
+<img src="sprites/toUse/shots/hud_heartFull.png" width="40" height="40" style="margin-left:10px;"></img>
+<h3>This heart can increase you health.</h3>
+</div>
+<div class="obj">
+<img src="sprites/toUse/shots/shieldBronze.png" width="60" height="60"></img>
+<h3>These prevent you from getting hit for an amount of time.</h3><br>
+</div>
+<div class="obj">
+<img src="sprites/toUse/shots/coinSilver.png" width="60" height="60"></img>
+<h3>Silver coins give you 10 points</h3><br>
+</div>
+<div class="obj">
+<img src="sprites/toUse/shots/coinGold.png" width="60" height="60"></img>
+<h3>Golden coins give you 20 points</h3><br>
+</div>
+<div class="obj">
+<img src="sprites/toUse/shots/gemGreen.png" width="60" height="60"></img>
+<h3>Emerald give you 40 points</h3><br>
+</div>
+<div style="margin-left:15px;"class="obj">
+<canvas id="canvas" width="30" height="30"></canvas>
+<h3>These will blind you from seeing half of the screen for a small amount of time.</h3><br>
+</div>
+</div>
+<a class="btn btn-primary" id="back" href="/">Back to Main menu</a>
+</body>
+<script>
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+ctx.beginPath();
+ctx.rect(0,0,60,60);
+ctx.fillStyle = "black";
+ctx.fill();
+</script>
+<style>
+body{
+    background-image:url(sprites/toUse/background1.png);
+}
+h1{
+    font-size:40px;
+    margin-bottom:30px;
+    margin-left:20px;
+}
+img{
+    display:inline;
+}
+h3{
+    display:inline;
+}
+.btn{
+    font-size:40px;
+    margin-bottom:30px;
+}
+#back{
+    margin-top:30px;
+    font-size:20px;
+}
+</style>
+</html>

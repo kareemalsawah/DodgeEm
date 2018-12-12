@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Chesmitry Quiz</title>
+<script src="/javascripts/bootstrap.js"></script>
+<script src="/javascripts/bootstrap.min.js"></script>
+<link rel="stylesheet" href="/stylesheets/bootstrap.css">
+<link rel="stylesheet" href="/stylesheets/bootstrap.min.css">
+<link rel="stylesheet" href="/stylesheets/bootstrap-grid.css">
+<link rel="stylesheet" href="/stylesheets/bootstrap-reboot.css">
+<link rel="stylesheet" href="/stylesheets/bootstrap-reboot.min.css">
+    <link rel="icon" type="img/ico" href="/favicon.ico">
+    <script src="/javascripts/babylon.custom.js"></script>
+<style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+        #resultsText{
+            color:white;
+            text-align:center;
+        }
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        body{
+            background-color:#229;
+        }
+    .form-titles{
+        color:#cc4;
+    }
+    #enter-name{
+        color:#cc4;
+    }
+    #submit-name-btn{
+    }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        function startBabylon() {
+            var http = new XMLHttpRequest();
+            http.open('POST','/form',true);
+            var params =  'firstName='+localStorage.getItem("savedName")+'&Class='+localStorage.getItem("savedClass")+'&answers=s';
+            http.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+            http.onload = function(){
+            }
+            http.send(params);
+            var camera;
+            var questionsPerTest = 10;
+            var answered = [];
+            var touching = false;
+            var onMCQ = true;
+            var nextQuestion;
+            var mcqs = [];
+            var prevMesh;
+            var ctx;
+            var answeredQuestions = 0;
+            var scoreCorrect = 0;
+            var MCQpercent = 1;
+            var currentChoice = "";
+            var correctAnswers = [1,0,1,1,2,3,2,0,1,0,1,0,2,1];
+            /*for (var i = 0; i < 14; i++){
+                correctAnswers.push(3);
+            }*/
+            var currentQuestion = 0;
+            var questionsAvailable = [];
+            for(var i = 0; i < 14; i++){
+                answered.push("n");
+                questionsAvailable.push(i);
+            }
+            if (BABYLON.Engine.isSupported()) {
+                BABYLON.Engine.enableOfflineSupport = false;
+                var canvas = document.getElementById("renderCanvas");
+                var engine = new BABYLON.Engine(canvas, true);
+
+                BABYLON.SceneLoader.Load("/javascripts/", "Room_Final.babylon", engine, function (newScene) {
+                    // Wait for textures and shaders to be ready
+                    //var camera = new BABYLON.DeviceOrientationCamera("DevOr_camera", new BABYLON.Vector3(0, 1, -15), newScene);
+
+                    // target the camera to scene origin
+                    // camera.setTarget(BABYLON.Vector3.Zero());
+                    newScene.executeWhenReady(function () {
+                        // Attach camera to canvas inputs
+                        newScene.activeCamera.attachControl(canvas);
+                        camera = newScene.activeCamera;
+
+                        var ray = new BABYLON.Ray();
+                        var rayHelper = new BABYLON.RayHelper(ray);
+                        var localMeshDirection = new BABYLON.Vector3(0, 0, 1);
+                        var localMeshOrigin = new BABYLON.Vector3(0, 0, 0);
+                        var length = 100;
+                        rayHelper.attachToMesh(camera, localMeshDirection, localMeshOrigin, length);
+                        rayHelper.show(newScene);
+                        var box1 = BABYLON.Mesh.CreateBox("box1", 8.0, newScene);
+                        box1.scaling = new BABYLON.Vector3(0.4, 0.1, 0.2);
+                        box1.position = new BABYLON.Vector3(-2, 5.95, 0.1);
+                        var matBox = new BABYLON.StandardMaterial("matBox", newScene);
+                        matBox.diffuseColor = new BABYLON.Color3(1, 1, 1);
+                        matBox.alpha = 0.0;
+                        box1.material = matBox;
+                        var box2 = BABYLON.Mesh.CreateBox("box2", 8.0, newScene);
+                        box2.scaling = new BABYLON.Vector3(0.4, 0.1, 0.2);
+                        box2.position = new BABYLON.Vector3(-2, 7.1, 0.1);
+                        box2.material = matBox;
+                        var box3 = BABYLON.Mesh.CreateBox("box3", 8.0, newScene);
+                        box3.scaling = new BABYLON.Vector3(0.4, 0.1, 0.2);
+                        box3.position = new BABYLON.Vector3(2, 5.95, 0.1);
+                        box3.material = matBox;
+                        var box4 = BABYLON.Mesh.CreateBox("box4", 8.0, newScene);
+                        box4.scaling = new BABYLON.Vector3(0.4, 0.1, 0.2);
+                        box4.position = new BABYLON.Vector3(2, 7.1, 0.1);
+                        box4.material = matBox;
+                        function LoadQuestions(){
+                            var loader4 = new BABYLON.AssetsManager(newScene);
+                            for (var j = 0; j < 14; j++){
+                                var name = "MCQ_9_"+(j+1);
+                                var mesh = loader4.addMeshTask(name, "", "javascripts/objs/", name + ".obj");
+                                mesh.onSuccess = function(task){
+                                var m = task.loadedMeshes;
+                                mcqs.push(m);
+                                for (var i = 0; i < m.length; i++){
+                                    m[i].position = new BABYLON.Vector3(1000,1000,1000);
+                                }
+                            }
+                            }
+                            loader4.load();
+                            loader4.useDefaultLoadingScreen = false;
+                        }
+                        //LoadQuestions();
+                        //function that gets next question
+                        function changeQuestion() {
+                            var name = "MCQ_9_";
+                            var index = Math.floor(Math.random() * questionsAvailable.length);
+                            var question = questionsAvailable[index] + 1;
+                            currentQuestion = question-1;
+                            var temp = [];
+                            for (var j = 0; j < questionsAvailable.length; j++) {
+                                if (questionsAvailable[j] != (question - 1)) {
+                                    temp.push(questionsAvailable[j]);
+                                }
+                            }
+                            questionsAvailable = temp;
+                            var loader4 = new BABYLON.AssetsManager(newScene);
+                                var name = "MCQ_9_"+(question);
+                                var mesh = loader4.addMeshTask(name, "", "javascripts/objs/", name + ".obj");
+                                mesh.onSuccess = function(task) {
+                                    var m = task.loadedMeshes;
+                                    if(prevMesh!=undefined){
+                                        deletePrev();
+                                    }
+                                    prevMesh = m;
+                                }
+                            loader4.useDefaultLoadingScreen = false;
+                            loader4.load();
+                        }
+                        setTimeout(changeQuestion,1000);
+                        function deletePrev(){
+                            for (var i = 0; i < prevMesh.length; i++){
+                                prevMesh[i].position = new BABYLON.Vector3(1000,1000,1000);
+                            }
+                        }
+                        nextQuestion = function (answer){
+                            if(Math.random()<=MCQpercent){
+                                answeredQuestions++;
+                                onMCQ = true;
+                                if(answer==correctAnswers[currentQuestion]){
+                                    alert("Correct Answer");
+                                    scoreCorrect++;
+                                    answered[currentQuestion] = "c";
+                                }else {
+                                    alert("Wrong Answer");
+                                    answered[currentQuestion] = "w";
+                                }
+
+                                currentQuestion++;
+                                    var http = new XMLHttpRequest();
+                                    http.open('POST','/form',true);
+                                    var params =  'firstName='+localStorage.getItem("savedName")+'&Class='+localStorage.getItem("savedClass")+'&answers='+answered[currentQuestion-1];
+                                    http.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+                                    http.onload = function(){
+                                    }
+                                    http.send(params);
+                            }else {
+                                onMCQ = false;
+                                //Other Question Types
+                            }
+                            if(answeredQuestions==questionsPerTest){
+                                if(localStorage.hasOwnProperty("levelsPlayed")){
+                                    localStorage.setItem("levelsPlayed",localStorage.getItem("levelsPlayed")+1);
+                                }else{
+                                    localStorage.setItem("levelsPlayed",1);
+                                }
+                                alert("This test has ended and it will restart if you wish to try again with different questions");
+                                document.body.innerHTML = "<h1 id='resultsText'>Your score was "+scoreCorrect+" out of 10</h1>";
+                            }else{
+                            changeQuestion();
+                            }
+                        }
+                        function restart(){
+                            currentQuestion = 0;
+                            answered = [];
+                            questionsAvailable = [];
+                            for(var i = 0; i < questionsPerTest; i++){
+                            answered.push("n");
+                             questionsAvailable.push(i);
+                            }
+                        }
+                        // attach the camera to the canvas
+                        //camera.attachControl(canvas, false);
+                        // Once the scene is loaded, just register a render loop to render it
+                        engine.runRenderLoop(function () {
+                            newScene.registerBeforeRender(function () {
+                               // var hitInfo1 = ray.intersectsMeshes([box1]);
+                                var boxes = [box1, box2, box3, box4];
+                                for (var i = 0; i < boxes.length; i++) {
+                                    var temp = [];
+                                    temp.push(boxes[i]);
+                                    var hit = ray.intersectsMeshes(temp);
+                                    if (hit.length&&onMCQ) {
+                                        boxes[i].showBoundingBox = true;
+                                        for (var j = 0; j < boxes.length; j++){
+                                            if (i!= j){
+                                                boxes[j].showBoundingBox = false;
+                                            }
+                                        }
+                                        //alert(currentChoice);
+                                        currentChoice = i;
+                                        i=boxes.length;
+                                    } else {
+                                        boxes[i].showBoundingBox = false;
+                                        currentChoice = "";
+                                    }
+                                }
+
+    });
+
+                            newScene.render();
+                });
+            });
+        }, function (progress) {
+                    // To do: give progress feedback to user
+        });
+    }
+    window.addEventListener(
+        "touchstart", handleTouched, true);
+    function handleTouched(event){ //touching = true;
+        if(currentChoice!=""||currentChoice==0) {
+            nextQuestion(currentChoice);
+            touching = false;
+        }
+        // camera.rotation = new BABYLON.Vector3((gamma/2000)*201.059,(-beta/2000)*201.059,0);
+    }
+    document.onkeydown = function userInput(){
+        if(event.keyCode==32){
+            if(currentChoice!=""||currentChoice==0) {
+            nextQuestion(currentChoice);
+            touching = false;
+        }
+        }
+    }
+    window.addEventListener("touchend",handleTouchEnded,true);
+    function handleTouchEnded(event){
+        touching = false;
+    }
+    }
+    if(localStorage.hasOwnProperty("savedName")){
+        if(!localStorage.hasOwnProperty("levelsPlayed")||localStorage.getItem("levelsPlayed")<2){
+            startBabylon();
+        }else if(localStorage.hasOwnProperty("levelsPlayed")){
+            alert("You have done the test two times already! You are out of tries :P")
+          // localStorage.removeItem("savedName");
+        }
+    }else{
+        document.body.innerHTML = "<h1 id='enter-name'>Please Enter your Information</h1><h2 class='form-titles'>Name:</h2><textarea class='form-control' id='name'></textarea><br><h2 class='form-titles'>Class:</h2><textarea class='form-control' id='class'></textarea><br><input class='btn btn-primary' value='Submit name' type='button' id='submit-name-btn'onclick='saveName(document.getElementById("+'"name"'+"),document.getElementById("+'"class"'+"))'></input>";
+    }
+    function saveName(name,obj){
+        localStorage.setItem("savedName",name.value);
+        localStorage.setItem("savedClass",obj.value);
+        //document.body.innerHTML = "<canvas id='renderCanvas'></canvas>";
+        var http = new XMLHttpRequest();
+        http.open('POST','/form',true);
+        var params =  'firstName='+localStorage.getItem("savedName")+'&Class='+localStorage.getItem("savedClass")+'&answers=new';
+        http.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        http.onload = function(){
+        }
+        http.send(params);
+        document.body.innerHTML = "<a class='form-titles' href='/instructions'>Go to Instructions</a>";
+        //startBabylon();
+    }
+    </script>
+ </body>
+</html>
